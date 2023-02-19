@@ -12,6 +12,8 @@ AudioPlayer coin;
 AudioPlayer die;
 AudioPlayer boss;
 AudioPlayer laugh;
+AudioPlayer jump;
+AudioPlayer bosshit;
 
 boolean takenGoldenKey = false;
 
@@ -30,6 +32,25 @@ PImage FinalIdle4;
 PImage FinalIdle5;
 PImage FinalIdle6;
 PImage FinalIdle7;
+
+PImage wind0;
+PImage wind1;
+PImage wind2;
+PImage wind3;
+PImage wind4;
+PImage wind5;
+PImage wind6;
+PImage wind7;
+PImage wind8;
+
+PImage blood0;
+PImage blood1;
+PImage blood2;
+PImage blood3;
+PImage blood4;
+PImage blood5;
+PImage blood6;
+
 
 PImage FinalAttack10;
 PImage FinalAttack11;
@@ -122,6 +143,13 @@ PImage attack2;
 PImage attack3;
 PImage attack4;
 
+PImage Slide0;
+PImage Slide1;
+PImage Slide2;
+PImage Slide3;
+PImage Slide4;
+PImage Slide5;
+
 PImage arrow;
 
 PImage MasterBack;
@@ -212,6 +240,7 @@ ArrayList<Monster>   l29_monsters = new ArrayList<Monster>();
 ArrayList<Monster>   l40_monsters = new ArrayList<Monster>();
 ArrayList<Monster>   l20_monsters = new ArrayList<Monster>();
 ArrayList<Particle> particles = new ArrayList<Particle>();
+ArrayList<Trail> trails = new ArrayList<Trail>();
 
 ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 
@@ -235,6 +264,27 @@ void setup() {
   coin = minim.loadFile("sfx/coin.wav");
   die = minim.loadFile("sfx/die.mp3");
   laugh = minim.loadFile("sfx/boss_laugh.mp3");
+  bosshit = minim.loadFile("sfx/bosshit.wav");
+  jump = minim.loadFile("sfx/jump.wav");
+
+  wind0 = loadImage("img/wind0.png");
+  wind1 = loadImage("img/wind1.png");
+  wind2 = loadImage("img/wind2.png");
+  wind3 = loadImage("img/wind3.png");
+  wind4 = loadImage("img/wind4.png");
+  wind5 = loadImage("img/wind5.png");
+  wind6 = loadImage("img/wind6.png");
+  wind7 = loadImage("img/wind7.png");
+  wind8 = loadImage("img/wind8.png");
+
+
+  blood0 = loadImage("img/blood0.png");
+  blood1 = loadImage("img/blood1.png");
+  blood2 = loadImage("img/blood2.png");
+  blood3 = loadImage("img/blood3.png");
+  blood4 = loadImage("img/blood4.png");
+  blood5 = loadImage("img/blood5.png");
+  blood6 = loadImage("img/blood6.png");
 
   
 
@@ -313,7 +363,14 @@ void setup() {
   Run2 = loadImage("img/adventurer-run-02.png");
   Run3 = loadImage("img/adventurer-run-03.png");
   Run4 = loadImage("img/adventurer-run-04.png");
-  Run5 = loadImage("img/adventurer-run-04.png");
+  Run5 = loadImage("img/adventurer-run-05.png");
+
+  Slide0 = loadImage("img/adventurer-slide-00.png");
+  Slide1 = loadImage("img/adventurer-slide-01.png");
+  Slide2 = loadImage("img/adventurer-slide-02.png");
+  Slide3 = loadImage("img/adventurer-slide-03.png");
+  Slide4 = loadImage("img/adventurer-slide-04.png");
+  Slide5 = loadImage("img/adventurer-slide-05.png");
 
   plank = loadImage("img/plank.png");
 
@@ -715,7 +772,7 @@ if(!gottree2) image(tree2, 600, 300, 150, 205);
     
     fill(128,0,128);
 
-    rect(200, 20, 500 * (l20_monsters.get(0).health / 300), 20);
+    rect(200, 20, 500 * (l20_monsters.get(0).health / 150), 20);
 
     place = "Finale";
   }
@@ -782,7 +839,19 @@ tint(255, 60);
   
   noTint();
   popMatrix();
+
+
   hero.update();
+
+    for(int i = 0; i < trails.size(); i++) {
+    trails.get(i).update();
+
+    // if()
+    if(trails.get(i).finished) {
+      trails.remove(i);
+    }
+  }
+
   
   fill(255, 255, 255);
   text(place, 900 - 30 - place.length() * 18, 15, place.length() * 20, 50);
@@ -882,6 +951,8 @@ class Monster {
   int untilLaugh = 20;
 
   boolean EvilLaughOngoing = false;
+
+  int opac = 0;
   
   float accelerationX = 0;
   float accelerationY = 0;
@@ -907,11 +978,13 @@ class Monster {
 
 
     if(type_ != "ex") {
-      health = 300;
+      health = 150;
       speed = 5;
       multiplier = random(1, 2);
     }
   }
+
+boolean firstLaugh = true;
   
   void update() {
 
@@ -922,12 +995,19 @@ class Monster {
   x += accelerationX;
   y += accelerationY;
 
-  if(!EvilLaughOngoing && untilLaugh <= 0) {
+  if(!EvilLaughOngoing && untilLaugh <= 0 && type != "ex") {
     EvilLaughOngoing = true;
     laugh.rewind();
     laugh.play();
 
+    if(!firstLaugh) {
+            l20_monsters.add(new Monster("ex"));
+    }
+
+    firstLaugh = false;
+
     cameraShakeNum = 4;
+
     // untilLaugh = 500;
   }
 
@@ -961,7 +1041,9 @@ angle = degrees(atan2((hero.hY1 + 200) - (y), (hero.hX1) - (x)));
     y += sin(radians(angle)) * speed * multiplier;
     
     if(type != "ex") {
+      // if(!hero.dead)  {
       state = 1;
+      
     }
   } else {
     if(!hero.dead && type == "ex"){
@@ -969,7 +1051,11 @@ angle = degrees(atan2((hero.hY1 + 200) - (y), (hero.hX1) - (x)));
     }
 if(type != "ex") {
   if(!attacking) {
+   if(!hero.dead) {
       state = 0;
+   } else {
+    state = 3;
+   }
 
       print("re set");
   }
@@ -977,6 +1063,8 @@ if(type != "ex") {
     
 
   }
+
+  opac += 5;
  
   
     if(frameCount % 6 == 0) {
@@ -1027,12 +1115,12 @@ if(type != "ex") {
           if(currentImg == FinalIdle0) {
         currentImg = FinalIdle1;
 
-                if(random(1) * 1 > 0.5) {
-                    attacking = true;
-          state = 2;
-          currentImg = FinalAttack10;  
+          //       if(random(1) * 1 > 0.5) {
+          //           attacking = true;
+          // state = 2;
+          // currentImg = FinalAttack10;  
 
-        }
+        // }
 
 
         // bullets.add(new Bullet(x + 150, y + 150, angle));
@@ -1093,6 +1181,9 @@ if(type != "ex") {
 
           //ATTACK HERE
 
+
+    bosshit.rewind();
+    bosshit.play();
 if(facingLeft) {
                     bullets.add(new Bullet(x, y, angle - 30, "boss"));
                               bullets.add(new Bullet(x, y , angle, "boss"));
@@ -1135,6 +1226,7 @@ if(type != "ex") {
     translate(-320, -320);
 } else {
   translate(-50, 0);
+  tint(255, opac);
 }
  
         if(x < hero.hX1) {
@@ -1248,6 +1340,10 @@ class Hero {
   
   int shield = 20;
   int health = 100;
+
+  float accelerationX;
+
+
   
   float hX1, hY1, hX2, hY2 = 0;
   
@@ -1266,10 +1362,20 @@ class Hero {
   
 
   void update () { 
+
+    accelerationX *= 0.97;
+
+    x += accelerationX;
     
     if(health < 0 && !dead) {
       dead = true;
       state = 6;
+
+      // canGoToRooms = fal
+      wKey = false;
+      aKey = false;
+      sKey = false;
+      dKey = false;
       
         die.rewind();
   die.play();
@@ -1373,6 +1479,7 @@ class Hero {
     pushMatrix();
     translate(-60, 0);
     if(facing == 1) 
+
   {image(getReversePImage(currentImg), x, y, 200, 148); 
 }else if (facing == 0){ 
       image((currentImg), x, y, 200, 148); 
@@ -1405,9 +1512,12 @@ if(frameCount % 15 == 0) {
     if(frameCount % 30 == 0) {
     run1.rewind();
           run1.play();
+          trails.add(new Trail(hX1, hY1 + 100, facing, "air"));
+          // trails//
     } else {
       run0.rewind();
           run0.play();
+          trails.add(new Trail(hX1, hY1 + 100, facing, "air"));
     }
     
   }
@@ -1429,6 +1539,27 @@ if(frameCount % 15 == 0) {
         //if(currentImg == Idle2) {
         //  currentImg = Idle0;
         //};       
+      } else if(state == 7) {
+        if(currentImg == Slide0){
+          currentImg = Slide1;
+          jump.rewind();
+          jump.play();
+          // aKey = false;
+          // dKey = false;
+        } else if(currentImg == Slide1) {
+          currentImg = Slide2;
+        } else if(currentImg == Slide2) {
+          currentImg = Slide3;
+        } else if(currentImg == Slide3) {
+          currentImg = Slide4;
+        } else if(currentImg == Slide4) {
+          currentImg = Slide5;
+          accelerationX = 0;
+          state = 0;
+          currentImg = Idle0;
+        }  else {
+          currentImg = Slide0;
+        }
       } else if(state == 6) {
         if(currentImg == die0) {
           currentImg = die1;
@@ -1584,6 +1715,7 @@ if(frameCount % 15 == 0) {
             particles.add(new Particle(miss, hX1 + 50 + random(0, 40), hY1 + random(0, 40), 79.2, 24, 255));
           }
           } else {
+            trails.add(new Trail(hX1, hY1 - 120, facing, "blood"));
             if(subtractBy > 7) {
               if(hero.facing == 1) {
             particles.add(new Particle(green_critical, hX1 - 50 + random(0, 40), hY1 + random(0, 40), 72, 28, 255));
@@ -1669,24 +1801,37 @@ void keyPressed() {
   //hero.currentImg = Run0;
   if(!hero.dead){
   if(key == 'w') {
-    if(hero.state != 2) hero.state = 1;
+    if(hero.state != 2 && hero.state != 7) hero.state = 1;
     wKey = true;
   }
   if(key == 'a') {
-    if(hero.state != 2) hero.state = 1;
+    if(hero.state != 2 && hero.state != 7) hero.state = 1;
     aKey = true;
     hero.facing = 1;
   }
   if(key == 's') {
-    if(hero.state != 2) hero.state = 1;
+    if(hero.state != 2 && hero.state != 7) hero.state = 1;
     sKey = true;
 
   }
   if(key == 'd') {
-    if(hero.state != 2) hero.state = 1;
+    if(hero.state != 2 && hero.state != 7) hero.state = 1;
     dKey = true;
     hero.facing = 0;
   }
+
+  if(keyCode == SHIFT) {
+    // println("SHIF");
+    if(hero.state != 7) {
+      if(hero.facing == 0) {
+    hero.accelerationX =  6;
+      } else {
+            hero.accelerationX = -6;
+      }
+    hero.state = 7;
+    }
+  }
+
     if(key == ' ' && hasSword) {
     hero.state = 2;
   }
@@ -1817,6 +1962,95 @@ if(woodcutterState == 0) {
     }
 }
 
+class Trail {
+  float x, y, facing = 0;
+  String type;
+  PImage currentImg;
+  boolean finished = false;
+  Trail (float x_, float y_, int facing_, String type_) {
+    x = x_;
+    y = y_;
+    facing = facing_;
+    type = type_;
+
+    if(type_ == "air") {
+      currentImg = wind0;
+    } else if(type_ == "blood") {
+      currentImg = blood0;
+    }
+  }
+
+  void update () {
+
+
+
+    println(facing);
+
+    if(type == "air") {
+    if(facing == 0) {
+    image(getReversePImage(currentImg), x, y, 90, 90);
+    } else {
+          image(currentImg, x, y, 90, 90);
+    }
+    } else if(type == "blood") {
+      if(facing == 0) {
+    // image(getReversePImage(currentImg), x, y, 90, 90);
+    image(currentImg, x, y, 360, 250);
+    } else {
+          // image(currentImg, x, y, 90, 90);
+          image(currentImg, x - 150, y, 360, 250);
+    }
+      
+    }
+
+    if(frameCount % 3 == 0) {
+      if(type == "air") {
+      if(currentImg == wind0) {
+        currentImg = wind1;
+      } else if(currentImg == wind1) {
+        currentImg = wind2;
+      } else if(currentImg == wind2) {
+        currentImg = wind3;
+      } else if(currentImg == wind3) {
+        currentImg = wind4;
+      } else if(currentImg == wind4) {
+        currentImg = wind5;
+      } else if(currentImg == wind5) {
+        currentImg = wind6;
+      } else if(currentImg == wind6) {
+        currentImg = wind7;
+      } else if(currentImg == wind7) {
+        currentImg = wind8;
+      } else if(currentImg == wind8) {
+        finished = true;
+        currentImg = null;
+      } else {
+        currentImg = wind0;
+      }
+    } else if(type == "blood") {
+      if(currentImg == blood0) {
+        currentImg = blood1;
+      } else if(currentImg == blood1) {
+        currentImg = blood2;
+      } else if(currentImg == blood2) {
+        currentImg = blood3;
+      } else if(currentImg == blood3) {
+        currentImg = blood4;
+      } else if(currentImg == blood4) {
+        currentImg = blood5;
+      } else if(currentImg == blood5) {
+        currentImg = blood6;
+      } else if(currentImg == blood6) {
+        finished = true;
+        currentImg = null;
+      } else {
+        currentImg = blood0;
+      }
+    }
+    }
+  }
+}
+
 public PImage getReversePImage( PImage image ) {
 PImage reverse;
 reverse = createImage(image.width, image.height,ARGB );
@@ -1831,3 +2065,12 @@ reverse.pixels[yPixel*image.width+xPixel]=image.pixels[j*image.width+i] ;
 }
 return reverse;
 }
+
+
+
+
+
+
+
+
+////
