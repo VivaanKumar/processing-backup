@@ -14,6 +14,10 @@ AudioPlayer boss;
 AudioPlayer laugh;
 AudioPlayer jump;
 AudioPlayer bosshit;
+AudioPlayer bossdie;
+
+boolean isGameOver = false;
+int gameOverOpac = 0;
 
 boolean takenGoldenKey = false;
 
@@ -42,6 +46,8 @@ PImage wind5;
 PImage wind6;
 PImage wind7;
 PImage wind8;
+
+PImage needGoldkey;
 
 PImage blood0;
 PImage blood1;
@@ -236,9 +242,9 @@ boolean gottree3 = false;
 
 ArrayList<Conv> conv = new ArrayList<Conv>();
 ArrayList<String> items = new ArrayList<String>();
-ArrayList<Monster>   l29_monsters = new ArrayList<Monster>();
-ArrayList<Monster>   l40_monsters = new ArrayList<Monster>();
-ArrayList<Monster>   l20_monsters = new ArrayList<Monster>();
+ArrayList<Monster> l29_monsters = new ArrayList<Monster>();
+ArrayList<Monster> l40_monsters = new ArrayList<Monster>();
+ArrayList<Monster> l20_monsters = new ArrayList<Monster>();
 ArrayList<Particle> particles = new ArrayList<Particle>();
 ArrayList<Trail> trails = new ArrayList<Trail>();
 
@@ -267,6 +273,8 @@ void setup() {
   bosshit = minim.loadFile("sfx/bosshit.wav");
   jump = minim.loadFile("sfx/jump.wav");
 
+needGoldkey = loadImage("img/goldenkeyneed.png");
+
   wind0 = loadImage("img/wind0.png");
   wind1 = loadImage("img/wind1.png");
   wind2 = loadImage("img/wind2.png");
@@ -276,6 +284,8 @@ void setup() {
   wind6 = loadImage("img/wind6.png");
   wind7 = loadImage("img/wind7.png");
   wind8 = loadImage("img/wind8.png");
+
+  bossdie = minim.loadFile("sfx/bossdie.mp3");
 
 
   blood0 = loadImage("img/blood0.png");
@@ -739,9 +749,18 @@ if(!gottree2) image(tree2, 600, 300, 150, 205);
     for(int i = 0; i < l20_monsters.size(); i++) {
       l20_monsters.get(i).update();
       if(l20_monsters.get(i).health < 0) {
+        if(l20_monsters.get(i).type != "ex") {
+          // boss.pause();
+          boss.pause();
+          bossdie.rewind();
+          bossdie.play();
+          l20_monsters.remove(i);
+          isGameOver = true;
+        } else {
         l20_monsters.remove(i);
         explosion1.rewind();
         explosion1.play();
+        }
       }
     }
 
@@ -772,7 +791,11 @@ if(!gottree2) image(tree2, 600, 300, 150, 205);
     
     fill(128,0,128);
 
-    rect(200, 20, 500 * (l20_monsters.get(0).health / 150), 20);
+    if(l20_monsters.size() >= 1 && l20_monsters.get(0) != null && l20_monsters.get(0).type != "ex") {
+      //if(l20_monsters.get(0) != null) {
+        rect(200, 20, 500 * (l20_monsters.get(0).health / 75), 20);
+      //}
+    }
 
     place = "Finale";
   }
@@ -879,6 +902,25 @@ tint(255, 60);
   image(location, 845, 10, 45, 55);
   
   
+  
+  if(isGameOver) {
+    
+    fill(0, 0, 0, gameOverOpac);
+
+    rect(0, 0, 900, 900);
+
+    if(gameOverOpac <= 255) {
+
+    gameOverOpac += 2;
+        
+    } else {
+      fill(255);
+
+      textSize(100);
+      text("You Win!", 250, 400);
+    }
+    
+  }
 }
 
 class Bullet {
@@ -978,7 +1020,7 @@ class Monster {
 
 
     if(type_ != "ex") {
-      health = 150;
+      health = 75;
       speed = 5;
       multiplier = random(1, 2);
     }
@@ -1207,7 +1249,7 @@ if(facingLeft) {
         } else {
           currentImg = FinalAttack10;
         }
-         }
+         } 
   }
     }
 
@@ -1452,8 +1494,14 @@ class Hero {
     if(y > 900 - 148) {
       if(canGoToRooms) {
         if(room == 30) {
-          y = 0;
+           if(takenGoldenKey) {
+             y = 0;
           room -= 10;
+          } else {
+            y = 900 - 148;
+            // needRedKey
+            particles.add(new Particle(needGoldkey, 450 - 200, 600, 400, 300, 255));
+          }
         } else {
            y = 0;
           room -= 10;
